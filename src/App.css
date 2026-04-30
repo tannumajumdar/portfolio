@@ -229,7 +229,7 @@ section {
   border: 1px solid var(--border-glass);
   position: relative;
   transform-style: preserve-3d;
-  transition: transform 0.1s; /* Fast transition for JS tilt */
+  transition: transform 0.1s; 
 }
 
 .card-image {
@@ -282,7 +282,7 @@ section {
 
 .timeline-item {
   padding: 10px 40px; position: relative; width: 50%;
-  opacity: 0; /* JS Animation will handle this */
+  opacity: 0; 
   transform: translateY(30px);
 }
 
@@ -470,7 +470,7 @@ footer {
 
 .resume-stats-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr); /* 2 Columns */
+  grid-template-columns: repeat(2, 1fr); 
   gap: 2rem;
   margin-bottom: 3rem;
 }
