@@ -1,21 +1,59 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Background from './components/Background';
 import './App.css';
-import Resume from './assets/resume.pdf'; 
-
+import Resume from './assets/resume.pdf';
 
 gsap.registerPlugin(ScrollTrigger);
 
-const App = () => {
-  
-  const [mousePos, setMousePos] = useState({ x: '50%', y: '50%' });
+const ProjectCard = ({ proj }) => {
+  const cardRef = useRef(null);
 
-  
+  const handleTilt = (e) => {
+    if (!cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    const xPct = (e.clientX - rect.left) / rect.width;
+    const yPct = (e.clientY - rect.top) / rect.height;
+    const xRot = (0.5 - yPct) * 12;
+    const yRot = (xPct - 0.5) * 12;
+    cardRef.current.style.transform = `perspective(1000px) rotateX(${xRot}deg) rotateY(${yRot}deg) scale(1.04)`;
+  };
+
+  const resetTilt = () => {
+    if (!cardRef.current) return;
+    cardRef.current.style.transform = `perspective(1000px) rotateX(0) rotateY(0) scale(1)`;
+  };
+
+  return (
+    <div
+      className="project-card"
+      ref={cardRef}
+      onMouseMove={handleTilt}
+      onMouseLeave={resetTilt}
+    >
+      <div className="card-image">
+        <img src={proj.img} alt={proj.title} />
+      </div>
+      <div className="card-content">
+        <h3 className="card-title">{proj.title}</h3>
+        <p className="card-desc">{proj.desc}</p>
+        <div className="tech-stack">
+          {proj.tech.map((t, i) => <span key={i}>{t}</span>)}
+        </div>
+        <div className="card-links">
+          <a href="#"><i className="fab fa-github"></i> Code</a>
+          <a href="#"><i className="fas fa-external-link-alt"></i> Demo</a>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const App = () => {
+  const [mousePos, setMousePos] = useState({ x: '50%', y: '50%' });
   const [showToast, setShowToast] = useState(false);
 
-  
   const skills = [
     { name: "HTML5 & CSS3", percent: "95%" },
     { name: "JavaScript (ES6+)", percent: "70%" },
@@ -46,7 +84,7 @@ const App = () => {
     },
     {
       title: "E-tunes",
-      desc: "E-tunes is an intelligent music recommendation system that suggests songs based on the user’s emotional state.",
+      desc: "E-tunes is an intelligent music recommendation system that suggests songs based on the user's emotional state.",
       img: "https://res.cloudinary.com/dkswtjvfe/image/upload/f_auto,q_auto/Screenshot_2026-04-26_205915_gju2xg",
       tech: ["Python", "Keras Models", "Mediapipe", "numpy"]
     }
@@ -69,28 +107,8 @@ const App = () => {
     }
   ];
 
-  
   const handleMouseMove = (e) => {
     setMousePos({ x: `${e.clientX}px`, y: `${e.clientY}px` });
-  };
-
-  const handleTilt = (e, cardRef) => {
-    if (!cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const xPct = x / rect.width;
-    const yPct = y / rect.height;
-
-    const xRot = (0.5 - yPct) * 15;
-    const yRot = (xPct - 0.5) * 15;
-
-    cardRef.current.style.transform = `perspective(1000px) rotateX(${xRot}deg) rotateY(${yRot}deg) scale(1.02)`;
-  };
-
-  const resetTilt = (cardRef) => {
-    if (!cardRef.current) return;
-    cardRef.current.style.transform = `perspective(1000px) rotateX(0) rotateY(0) scale(1)`;
   };
 
   const handleFormSubmit = (e) => {
@@ -100,52 +118,76 @@ const App = () => {
     e.target.reset();
   };
 
- 
   const downloadResume = () => {
     const link = document.createElement('a');
-    link.href = Resume; 
-    link.setAttribute('download', 'Tannu_Resume.pdf'); 
+    link.href = Resume;
+    link.setAttribute('download', 'Tannu_Resume.pdf');
     document.body.appendChild(link);
     link.click();
     link.parentNode.removeChild(link);
   };
 
-  
   useEffect(() => {
-    
+    // Section headers — fade in up
     gsap.utils.toArray('.section-header').forEach((header) => {
-      gsap.to(header, {
-        opacity: 1,
-        y: 0,
-        duration: 1,
-        scrollTrigger: { trigger: header, start: "top 80%" }
-      });
+      gsap.fromTo(header,
+        { opacity: 0, y: 40 },
+        { opacity: 1, y: 0, duration: 1, ease: "power2.out",
+          scrollTrigger: { trigger: header, start: "top 80%" } }
+      );
     });
 
-    
+    // Skill bars animate to stored width
     gsap.utils.toArray('.poll-fill').forEach((bar) => {
       gsap.to(bar, {
         width: bar.getAttribute('data-width'),
-        duration: 1.5,
-        ease: "power2.out",
+        duration: 1.5, ease: "power2.out",
         scrollTrigger: { trigger: bar, start: "top 85%" }
       });
     });
 
-    gsap.utils.toArray('.timeline-item').forEach((item) => {
-      gsap.to(item, {
-        opacity: 1,
-        y: 0,
-        duration: 0.8,
-        scrollTrigger: { trigger: item, start: "top 80%" }
-      });
+    // Skill cards — staggered fade in up
+    gsap.utils.toArray('.skill-card').forEach((card, i) => {
+      gsap.fromTo(card,
+        { opacity: 0, y: 40 },
+        { opacity: 1, y: 0, duration: 0.7, delay: i * 0.08, ease: "power2.out",
+          scrollTrigger: { trigger: card, start: "top 85%" } }
+      );
     });
+
+    // Experience cards — staggered fade in up
+    gsap.utils.toArray('.timeline-item').forEach((item, i) => {
+      gsap.fromTo(item,
+        { opacity: 0, y: 50 },
+        { opacity: 1, y: 0, duration: 0.8, delay: i * 0.2, ease: "power2.out",
+          scrollTrigger: { trigger: item, start: "top 80%" } }
+      );
+    });
+
+    // Project cards — staggered fade in up
+    gsap.utils.toArray('.project-card').forEach((card, i) => {
+      gsap.fromTo(card,
+        { opacity: 0, y: 60 },
+        { opacity: 1, y: 0, duration: 0.8, delay: i * 0.15, ease: "power2.out",
+          scrollTrigger: { trigger: card, start: "top 85%" } }
+      );
+    });
+
+    // Intro text — fade in up
+    const introText = document.querySelector('.intro-text');
+    if (introText) {
+      gsap.fromTo(introText,
+        { opacity: 0, y: 30 },
+        { opacity: 1, y: 0, duration: 1, ease: "power2.out",
+          scrollTrigger: { trigger: introText, start: "top 85%" } }
+      );
+    }
   }, []);
 
   return (
     <div className="App" onMouseMove={handleMouseMove}>
       <Background />
-      
+
       <nav>
         <a href="#" className="logo">Tannu<span>Portfolio</span></a>
         <ul className="nav-links">
@@ -157,17 +199,15 @@ const App = () => {
         </ul>
         <button onClick={downloadResume} className="cv-btn-nav">Download CV</button>
       </nav>
- 
-      <button onClick={downloadResume} className="cv-btn-nav">Download CV</button>
 
       <section id="about">
         <div className="hero-content" style={{ '--x': mousePos.x, '--y': mousePos.y }}>
           <p className="hero-subtitle">Hello, I'm Tannu</p>
           <div className="hero-text">
-            <h1><br /><span style={{ color: 'var(--primary)' }}>Full-Stack <br />Developer</span></h1>
-            <p>I’m an aspiring Full-Stack Developer with experience in developing end-to-end web applications using React and Node.js.</p>
+            <h1><br /><span className="gradient-text">Full-Stack <br />Developer</span></h1>
+            <p>I'm an aspiring Full-Stack Developer with experience in developing end-to-end web applications using React and Node.js.</p>
           </div>
-          <a href="#projects" className="btn gap-2">View My Work</a>
+          <a href="#projects" className="btn">View My Work</a>
         </div>
       </section>
 
@@ -177,11 +217,10 @@ const App = () => {
             <h2>Introduction</h2>
           </div>
           <div className="intro-text">
-            <p>I’m a Full-Stack Developer focused on building scalable and user-friendly web applications. I have hands-on experience with React for frontend development and Node.js for backend services, along with integrating APIs and managing application logic. My work includes projects such as an emotion-based music recommendation system, demonstrating my ability to deliver practical and efficient solutions. I’m seeking an opportunity to contribute to a development team and continue growing my technical expertise.</p>
+            <p>I'm a Full-Stack Developer focused on building scalable and user-friendly web applications. I have hands-on experience with React for frontend development and Node.js for backend services, along with integrating APIs and managing application logic. My work includes projects such as an emotion-based music recommendation system, demonstrating my ability to deliver practical and efficient solutions. I'm seeking an opportunity to contribute to a development team and continue growing my technical expertise.</p>
           </div>
         </div>
       </section>
-
 
       <section id="skills">
         <div className="section-header">
@@ -202,7 +241,7 @@ const App = () => {
         </div>
       </section>
 
-       <section id="experience">
+      <section id="experience">
         <div className="section-header">
           <h2>My Experience</h2>
         </div>
@@ -210,9 +249,9 @@ const App = () => {
           {experiences.map((exp, index) => (
             <div className={`timeline-item ${exp.side}`} key={index}>
               <div className="content-box">
-                <h3>{exp.role}</h3>
+                <h3 className="exp-role">{exp.role}</h3>
                 <span className="date">{exp.date}</span>
-                <h3>{exp.company}</h3>
+                <h3 className="exp-company">{exp.company}</h3>
                 <p>{exp.desc}</p>
               </div>
             </div>
@@ -228,54 +267,22 @@ const App = () => {
           </p>
         </div>
         <div className="projects-container">
-          {projects.map((proj, index) => {
-            const cardRef = useRef(null);
-            return (
-              <div 
-                className="project-card" 
-                key={index}
-                ref={cardRef}
-                onMouseMove={(e) => handleTilt(e, cardRef)}
-                onMouseLeave={() => resetTilt(cardRef)}
-              >
-                <div className="card-image">
-                  <img src={proj.img} alt={proj.title} />
-                </div>
-                <div className="card-content">
-                  <h3 className="card-title">{proj.title}</h3>
-                  <p className="card-desc">{proj.desc}</p>
-                  <div className="tech-stack">
-                    {proj.tech.map((t, i) => <span key={i}>{t}</span>)}
-                  </div>
-                  <div className="card-links">
-                    <a href="#"><i className="fab fa-github"></i> Code</a>
-                    <a href="#"><i className="fas fa-external-link-alt"></i> Demo</a>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+          {projects.map((proj, index) => (
+            <ProjectCard proj={proj} key={index} />
+          ))}
         </div>
       </section>
 
       <section id="resume">
         <div className="resume-container">
-          
-          
           <span className="resume-subtitle">RESUME</span>
-          
-         
           <h2 className="resume-main-heading">
             Engineer of Reliable, <br />
             Efficient Applications
           </h2>
-
-          
-          <div className="resume-badge box-shadow-green">
+          <div className="resume-badge">
             Open to internships or full time opportunities
           </div>
-
-          
           <div className="resume-stats-grid">
             <div className="stat-item">
               <i className="fas fa-layer-group"></i>
@@ -294,17 +301,14 @@ const App = () => {
               <p>7.6 CPI academic excellence</p>
             </div>
           </div>
-
-          
           <div className="resume-buttons">
-           <button onClick={downloadResume} className="btn-download">
-  <i className="fas fa-file-download"></i> Download Resume
-</button>
-            <a href="https://www.linkedin.com/in/tannu-majumdar-6755a6373" target="_blank" className="btn-connect">
+            <button onClick={downloadResume} className="btn-download">
+              <i className="fas fa-file-download"></i> Download Resume
+            </button>
+            <a href="https://www.linkedin.com/in/tannu-majumdar-6755a6373" target="_blank" rel="noreferrer" className="btn-connect">
               Connect on LinkedIn
             </a>
           </div>
-
         </div>
       </section>
 
@@ -314,7 +318,7 @@ const App = () => {
         </div>
         <div className="contact-wrapper">
           <div className="contact-inner">
-            <form action="mailto:your-tannumajumdar4@gmail.com" method="post" enctype="text/plain" onSubmit={handleFormSubmit}>
+            <form action="mailto:tannumajumdar4@gmail.com" method="post" encType="text/plain" onSubmit={handleFormSubmit}>
               <div className="form-group">
                 <input type="text" className="form-input" name="name" required placeholder=" " />
                 <label className="form-label">Your Name</label>
