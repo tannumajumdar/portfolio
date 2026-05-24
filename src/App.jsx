@@ -4,6 +4,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Background from './components/Background';
 import './App.css';
 import Resume from './assets/resume.pdf';
+import emsAdminImg from './assets/ems-admin.png';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -73,7 +74,7 @@ const App = () => {
     {
       title: "Employee System Management",
       desc: "The Employee Management System is a full-stack web application designed to simplify employee data handling, task tracking, and administrative control.",
-      img: "https://res.cloudinary.com/dkswtjvfe/image/upload/f_auto,q_auto/Screenshot_2026-04-26_140907_wdhpsm",
+      img: emsAdminImg,
       tech: ["React.js", "React Hooks", "JSON"]
     },
     {
